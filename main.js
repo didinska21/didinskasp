@@ -415,21 +415,46 @@ async function getOptions(axiosInstance, email, referrer) {
   
   try {
     const response = await axiosInstance.post(url, data, {
-      headers: getGlobalHeaders(url, referrer)
+      headers: getGlobalHeaders(url, referrer),
+      responseType: 'arraybuffer', // ← TAMBAHKAN INI: Terima response sebagai binary
+      transformResponse: [] // ← TAMBAHKAN INI: Disable auto-transform
     });
     
-    if (response.data.code === 0) {
+    // Decode CBOR binary response
+    let decodedData;
+    try {
+      decodedData = cbor.decode(Buffer.from(response.data));
+    } catch (cborError) {
+      // Jika bukan CBOR, coba parse sebagai JSON
+      const jsonString = Buffer.from(response.data).toString('utf-8');
+      decodedData = JSON.parse(jsonString);
+    }
+    
+    // Cek response structure
+    if (decodedData.code === 0) {
       spinner.succeed('Options received');
-      return response.data.data;
+      return decodedData.data;
     } else {
-      throw new Error('Server error: ' + JSON.stringify(response.data));
+      throw new Error('Server error: ' + JSON.stringify(decodedData));
     }
   } catch (error) {
-    const errorMessage = error.response ? JSON.stringify(error.response.data) : error.message;
+    let errorMessage = error.message;
+    
+    // Better error handling
+    if (error.response) {
+      try {
+        // Coba decode error response juga
+        const errorData = cbor.decode(Buffer.from(error.response.data));
+        errorMessage = JSON.stringify(errorData);
+      } catch {
+        errorMessage = error.response.data ? error.response.data.toString() : error.message;
+      }
+    }
+    
     spinner.fail('Failed to get options: ' + errorMessage);
     return null;
   }
-}
+    }
 
 async function generateCredential(options) {
   const challenge = options.challenge;
