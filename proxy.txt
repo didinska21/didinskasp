@@ -1,0 +1,163 @@
+# ============================================
+# PROXY.TXT - PROXY LIST FORMAT
+# ============================================
+# 
+# Format: 1 proxy per baris
+# Hapus baris yang diawali dengan # (komentar)
+# Baris kosong akan diabaikan
+#
+# ============================================
+# FORMAT HTTP/HTTPS PROXY
+# ============================================
+#
+# Tanpa authentication:
+# http://IP:PORT
+# https://IP:PORT
+#
+# Dengan authentication (username & password):
+# http://username:password@IP:PORT
+# https://username:password@IP:PORT
+#
+# ============================================
+# FORMAT SOCKS PROXY
+# ============================================
+#
+# SOCKS5 tanpa authentication:
+# socks5://IP:PORT
+#
+# SOCKS5 dengan authentication:
+# socks5://username:password@IP:PORT
+#
+# SOCKS4 (jarang dipakai):
+# socks4://IP:PORT
+#
+# ============================================
+# CONTOH PROXY (GANTI DENGAN PROXY ASLI KAMU!)
+# ============================================
+
+# HTTP Proxy tanpa auth
+http://123.45.67.89:8080
+http://98.76.54.32:3128
+http://45.67.89.123:8888
+
+# HTTP Proxy dengan auth
+http://user123:pass456@123.45.67.89:8080
+http://myuser:mypassword@98.76.54.32:3128
+
+# HTTPS Proxy
+https://199.88.77.66:8443
+https://proxyuser:proxypass@199.88.77.66:8443
+
+# SOCKS5 Proxy tanpa auth
+socks5://11.22.33.44:1080
+socks5://55.66.77.88:9050
+
+# SOCKS5 Proxy dengan auth
+socks5://sockuser:sockpass@11.22.33.44:1080
+socks5://user:pass123@55.66.77.88:9050
+
+# ============================================
+# TIPS MEMILIH PROXY
+# ============================================
+#
+# 1. RESIDENTIAL PROXY (Paling Aman)
+#    - IP dari ISP rumahan (seperti Telkom, Indihome, dll)
+#    - Success rate tertinggi (90%+)
+#    - Harga: $3-15 per GB
+#    - Recommended untuk production
+#
+# 2. DATACENTER PROXY (Murah tapi Risky)
+#    - IP dari server/datacenter
+#    - Success rate sedang (60-80%)
+#    - Harga: $1-5 per proxy/bulan
+#    - Sering kena ban/blacklist
+#
+# 3. MOBILE PROXY (Premium)
+#    - IP dari provider seluler (Telkomsel, XL, dll)
+#    - Success rate sangat tinggi (95%+)
+#    - Harga: $50-100 per proxy/bulan
+#    - Recommended untuk high-value automation
+#
+# ============================================
+# CARA TEST PROXY
+# ============================================
+#
+# Test manual dengan curl:
+# curl --proxy http://IP:PORT https://api.ipify.org
+#
+# Atau pakai script test-proxy.js yang sudah disediakan
+#
+# ============================================
+# PROXY PROVIDER RECOMMENDATIONS
+# ============================================
+#
+# FREE (Not Recommended for Production):
+# - https://www.proxy-list.download/
+# - https://free-proxy-list.net/
+# - https://www.sslproxies.org/
+#
+# PAID (Recommended):
+# - Webshare.io - Datacenter proxy murah ($2.99/100 proxy)
+# - Smartproxy.com - Residential proxy berkualitas
+# - Bright Data - Premium proxy (ex-Luminati)
+# - Proxyrack.com - Mix datacenter & residential
+# - IPRoyal.com - Residential & mobile proxy
+#
+# ============================================
+# CONTOH FORMAT DARI PROVIDER POPULER
+# ============================================
+
+# Webshare format:
+# http://IP:PORT
+# https://username-rotate:password@gateway.webshare.io:80
+
+# Smartproxy format:
+# http://username:password@gate.smartproxy.com:7000
+# socks5://username:password@gate.smartproxy.com:7000
+
+# Bright Data format:
+# http://username-country-us:password@brd.superproxy.io:22225
+
+# ============================================
+# IMPORTANT NOTES
+# ============================================
+#
+# 1. JANGAN pakai proxy gratis untuk production
+#    - Lambat, sering down, banyak yang sudah di-ban
+#
+# 2. JANGAN pakai proxy dari 1 subnet yang sama
+#    - Contoh: 123.45.67.1, 123.45.67.2, 123.45.67.3 (BURUK!)
+#    - Variasi IP lebih baik: 123.45.x.x, 98.76.x.x, 45.67.x.x (BAGUS!)
+#
+# 3. ROTATING MODE vs STATIC MODE:
+#    - Rotating: Tiap akun pakai proxy berbeda (Recommended)
+#    - Static: Semua akun pakai 1 proxy (Cepat tapi risky)
+#
+# 4. SELALU TEST proxy sebelum pakai:
+#    - Pastikan proxy working & tidak lambat
+#    - Check IP location (kalau butuh specific country)
+#
+# 5. PROXY TIMEOUT:
+#    - Kalau proxy lambat > 30 detik, skip proxy tersebut
+#    - Bot akan otomatis next proxy (rotating mode)
+#
+# ============================================
+# FORMAT SALAH (AKAN ERROR!)
+# ============================================
+#
+# ❌ SALAH - Tanpa protocol:
+# 123.45.67.89:8080
+#
+# ❌ SALAH - Format tidak lengkap:
+# http://123.45.67.89
+#
+# ❌ SALAH - Spasi di tengah:
+# http:// 123.45.67.89:8080
+#
+# ❌ SALAH - Username/password dengan karakter khusus tanpa encode:
+# http://user@name:pass#word@123.45.67.89:8080
+# (Harus: http://user%40name:pass%23word@123.45.67.89:8080)
+#
+# ============================================
+# HAPUS SEMUA CONTOH DI ATAS & ISI DENGAN PROXY ASLI KAMU!
+# ============================================
