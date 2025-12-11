@@ -9,6 +9,7 @@ const cbor = require('cbor');
 const UserAgent = require('user-agents');
 const { HttpsProxyAgent } = require('https-proxy-agent');
 const inquirer = require('inquirer');
+const zlib = require('zlib');  // ← Tambahkan ini di baris paling atas
 
 const { 
   API, 
@@ -376,12 +377,8 @@ async function verifyEmail(axiosInstance, email, code, token) {
   }
 }
 
-// ============================================
-// REGISTRATION SERVICE
-// ============================================
-
 /**
- * Get WebAuthn registration options (FIXED FOR CBOR)
+ * Get WebAuthn registration options (FIXED FOR CBOR - FINAL VERSION)
  * @param {object} axiosInstance - Axios instance
  * @param {string} email - Email address
  * @param {string} referrer - Referrer code
@@ -397,30 +394,51 @@ async function getOptions(axiosInstance, email, referrer) {
   spinner.start();
   
   try {
-    // CRITICAL FIX: Handle CBOR response
+    // CRITICAL FIX: Handle CBOR binary response
     const response = await axiosInstance.post(API.REGISTER_OPTIONS, data, {
       headers: getGlobalHeaders(API.REGISTER_OPTIONS, referrer),
-      responseType: 'arraybuffer',  // Handle binary response
-      transformResponse: []          // Disable auto JSON parse
+      responseType: 'arraybuffer',  // Receive as binary
+      transformResponse: [],         // Disable auto-parsing
+      decompress: true               // Enable decompression
     });
     
     let decodedData;
     
+    // Method 1: Try CBOR decode
     try {
-      // Try to decode as CBOR first
-      decodedData = cbor.decodeFirstSync(Buffer.from(response.data));
+      const buffer = Buffer.from(response.data);
+      decodedData = cbor.decodeFirstSync(buffer);
+      console.log(`${COLORS.CYAN}[DEBUG] Decoded as CBOR successfully${COLORS.RESET}`);
     } catch (cborError) {
-      // Fallback: Try as JSON
+      console.log(`${COLORS.YELLOW}[DEBUG] CBOR decode failed, trying JSON...${COLORS.RESET}`);
+      
+      // Method 2: Try JSON decode
       try {
         const textData = Buffer.from(response.data).toString('utf-8');
         decodedData = JSON.parse(textData);
+        console.log(`${COLORS.CYAN}[DEBUG] Decoded as JSON successfully${COLORS.RESET}`);
       } catch (jsonError) {
-        logError('Failed to parse response as CBOR or JSON');
-        throw cborError;
+        // Method 3: Log raw data for debugging
+        const rawHex = Buffer.from(response.data).toString('hex').substring(0, 100);
+        console.log(`${COLORS.RED}[DEBUG] Failed to decode. First 50 bytes (hex): ${rawHex}${COLORS.RESET}`);
+        
+        // Try to decode as gzip
+        try {
+          const zlib = require('zlib');
+          const decompressed = zlib.gunzipSync(Buffer.from(response.data));
+          const decompressedText = decompressed.toString('utf-8');
+          decodedData = JSON.parse(decompressedText);
+          console.log(`${COLORS.CYAN}[DEBUG] Decoded as GZIP+JSON successfully${COLORS.RESET}`);
+        } catch (gzipError) {
+          logError('Failed to parse response as CBOR, JSON, or GZIP');
+          logError(`CBOR Error: ${cborError.message}`);
+          logError(`JSON Error: ${jsonError.message}`);
+          throw new Error('Unable to decode server response');
+        }
       }
     }
     
-    if (decodedData.code === 0) {
+    if (decodedData && decodedData.code === 0) {
       spinner.succeed(SUCCESS.OPTIONS_RECEIVED);
       return decodedData.data;
     } else {
@@ -431,11 +449,17 @@ async function getOptions(axiosInstance, email, referrer) {
     
     if (error.response) {
       try {
-        // Try to decode error response as CBOR too
-        const errorDecoded = cbor.decodeFirstSync(Buffer.from(error.response.data));
+        // Try to decode error response too
+        const errorBuffer = Buffer.from(error.response.data);
+        const errorDecoded = cbor.decodeFirstSync(errorBuffer);
         errorMessage = JSON.stringify(errorDecoded);
       } catch {
-        errorMessage = error.response.data ? error.response.data.toString() : error.message;
+        try {
+          const errorText = Buffer.from(error.response.data).toString('utf-8');
+          errorMessage = errorText;
+        } catch {
+          errorMessage = error.message;
+        }
       }
     } else {
       errorMessage = error.message;
@@ -444,7 +468,7 @@ async function getOptions(axiosInstance, email, referrer) {
     spinner.fail(`${ERRORS.FAILED_OPTIONS}: ${errorMessage}`);
     return null;
   }
-}
+  }
 
 /**
  * Generate WebAuthn credential
